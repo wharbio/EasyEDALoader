@@ -1624,6 +1624,20 @@ namespace EasyEDA_Loader
             return pad;
         }
 
+        internal static void SetPolygonPadShape(IPCB_Pad4 pad, TLayerConstant layer, ShapeContour contour)
+        {
+            if (contour.Points.Count < 3 || contour.Points.Exists(point => !double.IsFinite(point.X) || !double.IsFinite(point.Y)))
+                throw new FormatException("Polygon pad must contain at least three finite points.");
+
+            // Custom regions use pad-local coordinates. Reuse the existing linking
+            // path without adding the footprint origin to those coordinates.
+            var layers = layer == TLayerConstant.eMultiLayer
+                ? new[] { TLayerConstant.eTopLayer, TLayerConstant.eMidLayer1, TLayerConstant.eBottomLayer }
+                : new[] { layer };
+            foreach (var shapeLayer in layers)
+                ApplyCustomPadShape(pad, new V7_Layer(shapeLayer), CreateSolidRegion(null, shapeLayer, new[] { contour }));
+        }
+
         private static void ApplyCustomPadShape(IPCB_Pad4 pad, IV7_Layer targetLayer, IPCB_Region customShape)
         {
             if (pad == null || targetLayer == null || customShape == null)
@@ -2128,12 +2142,14 @@ namespace EasyEDA_Loader
             var polygon = AltiumApi.GlobalVars.PCBServer.Internal_PCBGeometricPolygonFactory() as IPCB_GeometricPolygon;
             if (polygon == null)
                 throw new InvalidOperationException("Could not create a region polygon.");
+            int originX = component?.GetState_XLocation() ?? 0;
+            int originY = component?.GetState_YLocation() ?? 0;
             foreach (var source in contours)
             {
                 if (source.Points.Count < 3) continue;
                 var contour = AltiumApi.GlobalVars.PCBServer.PCBContourFactory();
                 foreach (var point in source.Points)
-                    contour.AddPoint(AltiumApi.MmToCoord(point.X) + component.GetState_XLocation(), AltiumApi.MmToCoord(point.Y) + component.GetState_YLocation());
+                    contour.AddPoint(AltiumApi.MmToCoord(point.X) + originX, AltiumApi.MmToCoord(point.Y) + originY);
                 polygon.Internal_AddContourIsHole(contour, source.IsHole);
             }
             var region = AltiumApi.GlobalVars.PCBServer.PCBObjectFactory(TObjectId.eRegionObject, TDimensionKind.eNoDimension, TObjectCreationMode.eCreate_Default) as IPCB_Region;

@@ -2,12 +2,17 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
     <AssemblyName>EasyEDA-Loader.Core.Tests</AssemblyName>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <None Update="Fixtures\*.json" CopyToOutputDirectory="PreserveNewest" />
     <ProjectReference Include="..\..\EasyEDA-Loader\EasyEDA-Loader.csproj" />
+    <Reference Include="Altium.SDK.Interfaces">
+      <HintPath>..\..\EasyEDA-Loader\Assemblies\Altium.SDK.Interfaces.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\EasyEDA-Loader\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>

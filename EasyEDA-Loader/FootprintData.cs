@@ -188,17 +188,26 @@ namespace EasyEDA_Loader
 
         public void AddToComponent(IPCB_LibComponent c, EeFootprintContext ctx)
         {
-            ctx.SolidRegions = Shapes.OfType<EeFootprintSolidRegion>().ToList();
-            foreach (var shape in Shapes)
+            var server = AltiumApi.GlobalVars.PCBServer;
+            server.PreProcess();
+            try
             {
-                if (shape != null)
+                ctx.SolidRegions = Shapes.OfType<EeFootprintSolidRegion>().ToList();
+                foreach (var shape in Shapes)
                 {
-                    shape.AddToComponent(c, ctx);
+                    if (shape != null)
+                    {
+                        shape.AddToComponent(c, ctx);
+                    }
                 }
-            }
 
-            EEPCB.AddAssemblyTexts(c, ctx.HasAssemblyDesignatorText, ctx.HasAssemblyCommentText, ctx.Box.Height, ctx.ProjectionPrimitives, true);
-            EEPCB.AddCourtyard(c, ctx.Box.Width, ctx.Box.Height);
+                EEPCB.AddAssemblyTexts(c, ctx.HasAssemblyDesignatorText, ctx.HasAssemblyCommentText, ctx.Box.Height, ctx.ProjectionPrimitives, true);
+                EEPCB.AddCourtyard(c, ctx.Box.Width, ctx.Box.Height);
+            }
+            finally
+            {
+                server.PostProcess();
+            }
         }
     }
 

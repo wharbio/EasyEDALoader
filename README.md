@@ -22,7 +22,8 @@ Enable it to import the alternate board-outline spelling to the courtyard layer
 This is independent of **Import LCSC Mechanical Layers**. Import warnings retain
 full exception details in `Documents/AltiumEE/import-errors.log`.
 
-Footprint import includes `SOLIDREGION` geometry and cutouts, plus explicit pad
+Footprint import includes native custom `POLYGON` pads (including separate shapes
+with the same pad number), `SOLIDREGION` geometry and cutouts, plus explicit pad
 paste/solder mask expansions. Missing expansion values keep Altium's design
 rules. Multipart symbols import each gate as a separate Altium part sharing one
 footprint; preview shows the first usable gate. Polyline, polygon and path

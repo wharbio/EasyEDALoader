@@ -59,28 +59,49 @@ namespace EasyEDA_Loader
             {
                 Radius = Math.Max(Height / 2, Width / 2);
             }
-            Rectangle rect = new Rectangle
+            if (Shape == "POLYGON")
             {
-                Width = Width,
-                Height = Height,
-                RadiusX = Radius,
-                RadiusY = Radius,
-                Fill = new SolidColorBrush(ColorHelper.FromHex(ctx.Layers.GetLayerColor(Layer))),
-            };
-            Canvas.SetLeft(rect, CenterX - (Width / 2) - ctx.Box.X);
-            Canvas.SetTop(rect, CenterY - (Height / 2) - ctx.Box.Y);
-
-            if (Rotation > 0)
-            {
-                rect.RenderTransform = new RotateTransform
+                var geometry = new StreamGeometry();
+                using (var drawing = geometry.Open())
                 {
-                    Angle = Rotation,
-                    CenterX = Width / 2,
-                    CenterY = Height / 2,
-                };
+                    if (Points == null || Points.Count < 3)
+                        throw new FormatException("Polygon pad must contain at least three points.");
+                    // EasyEDA polygon vertices already include the pad rotation.
+                    drawing.BeginFigure(new Point(Points[0].X - ctx.Box.X, Points[0].Y - ctx.Box.Y), true, true);
+                    for (int index = 1; index < Points.Count; index++)
+                        drawing.LineTo(new Point(Points[index].X - ctx.Box.X, Points[index].Y - ctx.Box.Y), true, false);
+                }
+                elements.Add(new Path
+                {
+                    Data = geometry,
+                    Fill = new SolidColorBrush(ColorHelper.FromHex(ctx.Layers.GetLayerColor(Layer)))
+                });
             }
+            else
+            {
+                Rectangle rect = new Rectangle
+                {
+                    Width = Width,
+                    Height = Height,
+                    RadiusX = Radius,
+                    RadiusY = Radius,
+                    Fill = new SolidColorBrush(ColorHelper.FromHex(ctx.Layers.GetLayerColor(Layer))),
+                };
+                Canvas.SetLeft(rect, CenterX - (Width / 2) - ctx.Box.X);
+                Canvas.SetTop(rect, CenterY - (Height / 2) - ctx.Box.Y);
 
-            elements.Add(rect);
+                if (Rotation > 0)
+                {
+                    rect.RenderTransform = new RotateTransform
+                    {
+                        Angle = Rotation,
+                        CenterX = Width / 2,
+                        CenterY = Height / 2,
+                    };
+                }
+
+                elements.Add(rect);
+            }
 
             if (HolePoints.Count >= 2) // Add a pathed hole
             {
@@ -153,22 +174,23 @@ namespace EasyEDA_Loader
             var layer = ctx.Layers.GetLayer(Layer);
             if (layer != null)
             {
-                TShape padShape;
-                TExtendedHoleType holeType = TExtendedHoleType.eRoundHole;
-                switch (Shape)
-                {
-                    case "RECT": padShape = TShape.eRectangular; break;
-                    case "OVAL": padShape = TShape.eRounded; break;
-                    case "ELLIPSE": padShape = TShape.eRounded; break;
-                    default: throw new Exception($"Unknown pad shape {Shape}");
-                }
-                if (HoleLength > 0)
-                {
-                    holeType = TExtendedHoleType.eSlotHole;
-                }
-
                 try
                 {
+                    TShape padShape;
+                    TExtendedHoleType holeType = TExtendedHoleType.eRoundHole;
+                    switch (Shape)
+                    {
+                        case "RECT": padShape = TShape.eRectangular; break;
+                        case "OVAL": padShape = TShape.eRounded; break;
+                        case "ELLIPSE": padShape = TShape.eRounded; break;
+                        case "POLYGON": padShape = TShape.eCustomShape; break;
+                        default: throw new Exception($"Unknown pad shape {Shape}");
+                    }
+                    if (HoleLength > 0)
+                    {
+                        holeType = TExtendedHoleType.eSlotHole;
+                    }
+
                     if (!EEPCB.TryEELayerToAltium(layer.Name, ctx.ImportLcscMechanicalLayers, out targetLayer, ctx.ImportAdditionalLayers))
                         return true;
 
@@ -187,8 +209,16 @@ namespace EasyEDA_Loader
                         (targetLayer == TLayerConstant.eMultiLayer && padName == "1" && padShape == TShape.eRectangular);
                     TShape altiumPadShape = useRoundedRectangle ? TShape.eRoundedRectangular : padShape;
 
-                    var pad = EEPCB.CreatePTH(c, targetLayer, holeType, altiumPadShape, ConvertX(CenterX, ctx), ConvertY(CenterY, ctx), Height, Width, HoleRadius * 2, padName, IsPlated, Rotation);
-                    if (altiumPadShape == TShape.eRoundedRectangular)
+                    bool isPolygon = Shape == "POLYGON";
+                    var pad = EEPCB.CreatePTH(c, targetLayer, holeType, altiumPadShape, ConvertX(CenterX, ctx), ConvertY(CenterY, ctx), Height, Width, HoleRadius * 2, padName, IsPlated, isPolygon ? 0 : Rotation);
+                    if (isPolygon)
+                    {
+                        var contour = new ShapeContour { IsClosed = true };
+                        foreach (var point in Points)
+                            contour.Points.Add(new EePoint { X = point.X - CenterX, Y = CenterY - point.Y });
+                        EEPCB.SetPolygonPadShape(pad, targetLayer, contour);
+                    }
+                    else if (altiumPadShape == TShape.eRoundedRectangular)
                     {
                         pad.SetState_StackCRPctOnLayer(new V7_Layer(targetLayer), 25);
                     }
@@ -198,10 +228,7 @@ namespace EasyEDA_Loader
                     }
                     if (HoleLength > 0)
                     {
-                        if (Height > Width)
-                        {
-                            pad.SetState_HoleRotation(90);
-                        }
+                        pad.SetState_HoleRotation((Height > Width ? 90 : 0) + (isPolygon ? Rotation : 0));
                         pad.SetState_HoleWidth(AltiumApi.MmToCoord(HoleLength));
                     }
                     if (PasteMaskExpansion.HasValue || SolderMaskExpansion.HasValue)

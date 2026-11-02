@@ -1378,7 +1378,6 @@ namespace EasyEDA_Loader
 
                             if (createdFootprint)
                             {
-                                AltiumApi.GlobalVars.PCBServer.PreProcess();
                                 var footprintContext = new EeFootprintContext
                                 {
                                     Box = ee_footprint.BoundingBox,
@@ -1406,7 +1405,6 @@ namespace EasyEDA_Loader
                                 };
                                 ReportImportProgress(progress, $"Adding footprint primitives: {footprintName}", componentStartProgress + 12.0);
                                 ee_footprint.AddToComponent(libComp, footprintContext);
-                                AltiumApi.GlobalVars.PCBServer.PostProcess();
                                 ReportImportProgress(progress, $"PCB footprint complete: {footprintName}", componentStartProgress + 25.0);
                             }
                         }
