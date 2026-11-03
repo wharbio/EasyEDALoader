@@ -15,6 +15,8 @@ namespace EasyEDA_Loader
 
     public static class ModelZInfoCache
     {
+        private const string CacheVersion = "signed-z-v2";
+
         public static Task<ModelZInfo> GetOrCreateAsync(
             string modelUuid,
             Func<Task<byte[]>> loadRawObj,
@@ -96,7 +98,7 @@ namespace EasyEDA_Loader
 
             return new ModelZInfo
             {
-                OffsetFromOrigin = Math.Abs(minZ.Value),
+                OffsetFromOrigin = -minZ.Value,
                 Height = Math.Max(0, maxZ.Value - minZ.Value)
             };
         }
@@ -110,7 +112,7 @@ namespace EasyEDA_Loader
             try
             {
                 string[] lines = File.ReadAllLines(cachePath);
-                if (lines.Length < 2 ||
+                if (lines.Length != 3 || lines[2] != CacheVersion ||
                     !double.TryParse(lines[0], NumberStyles.Float, CultureInfo.InvariantCulture, out double offset) ||
                     !double.TryParse(lines[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double height))
                 {
@@ -143,7 +145,8 @@ namespace EasyEDA_Loader
                 new[]
                 {
                     zInfo.OffsetFromOrigin.ToString("R", CultureInfo.InvariantCulture),
-                    zInfo.Height.ToString("R", CultureInfo.InvariantCulture)
+                    zInfo.Height.ToString("R", CultureInfo.InvariantCulture),
+                    CacheVersion
                 },
                 Encoding.UTF8);
         }

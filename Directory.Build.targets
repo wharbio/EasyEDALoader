@@ -1,0 +1,7 @@
+<Project>
+  <ItemGroup Condition="'$(AltiumSystemDirectory)' != ''">
+    <Reference Update="Altium.Controls;Altium.SDK;Altium.SDK.Interfaces;Altium.Edp.Interfaces;Altium.Dxp.Interfaces;Altium.Dxp.Classes;Newtonsoft.Json">
+      <HintPath>$(AltiumSystemDirectory)\%(Reference.Identity).dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

@@ -12,6 +12,8 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <Deterministic>true</Deterministic>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <DevExpressVersion Condition="'$(DevExpressVersion)' == ''">24.1</DevExpressVersion>
+    <DevExpressDirectory Condition="'$(DevExpressDirectory)' == ''">Assemblies</DevExpressDirectory>
   </PropertyGroup>
 
   <ItemGroup>
@@ -46,29 +48,29 @@
       <HintPath>D:\Program files\ADAgile\System\Altium.Dxp.Interfaces.dll</HintPath>
       <Private>false</Private>
     </Reference>
-    <Reference Include="DevExpress.Data.v24.1">
-      <HintPath>Assemblies\DevExpress.Data.v24.1.dll</HintPath>
+    <Reference Include="DevExpress.Data.v$(DevExpressVersion)">
+      <HintPath>$(DevExpressDirectory)\DevExpress.Data.v$(DevExpressVersion).dll</HintPath>
     </Reference>
-    <Reference Include="DevExpress.Mvvm.v24.1">
-      <HintPath>Assemblies\DevExpress.Mvvm.v24.1.dll</HintPath>
+    <Reference Include="DevExpress.Mvvm.v$(DevExpressVersion)">
+      <HintPath>$(DevExpressDirectory)\DevExpress.Mvvm.v$(DevExpressVersion).dll</HintPath>
     </Reference>
-    <Reference Include="DevExpress.Printing.v24.1.Core">
-      <HintPath>Assemblies\DevExpress.Printing.v24.1.Core.dll</HintPath>
+    <Reference Include="DevExpress.Printing.v$(DevExpressVersion).Core">
+      <HintPath>$(DevExpressDirectory)\DevExpress.Printing.v$(DevExpressVersion).Core.dll</HintPath>
     </Reference>
-    <Reference Include="DevExpress.Utils.v24.1">
-      <HintPath>Assemblies\DevExpress.Utils.v24.1.dll</HintPath>
+    <Reference Include="DevExpress.Utils.v$(DevExpressVersion)">
+      <HintPath>$(DevExpressDirectory)\DevExpress.Utils.v$(DevExpressVersion).dll</HintPath>
     </Reference>
-    <Reference Include="DevExpress.XtraEditors.v24.1">
-      <HintPath>Assemblies\DevExpress.XtraEditors.v24.1.dll</HintPath>
+    <Reference Include="DevExpress.XtraEditors.v$(DevExpressVersion)">
+      <HintPath>$(DevExpressDirectory)\DevExpress.XtraEditors.v$(DevExpressVersion).dll</HintPath>
     </Reference>
-    <Reference Include="DevExpress.Xpf.Core.v24.1">
-      <HintPath>Assemblies\DevExpress.Xpf.Core.v24.1.dll</HintPath>
+    <Reference Include="DevExpress.Xpf.Core.v$(DevExpressVersion)">
+      <HintPath>$(DevExpressDirectory)\DevExpress.Xpf.Core.v$(DevExpressVersion).dll</HintPath>
     </Reference>
-    <Reference Include="DevExpress.Xpf.Grid.v24.1.Core">
-      <HintPath>Assemblies\DevExpress.Xpf.Grid.v24.1.Core.dll</HintPath>
+    <Reference Include="DevExpress.Xpf.Grid.v$(DevExpressVersion).Core">
+      <HintPath>$(DevExpressDirectory)\DevExpress.Xpf.Grid.v$(DevExpressVersion).Core.dll</HintPath>
     </Reference>
-    <Reference Include="DevExpress.Xpf.Grid.v24.1">
-      <HintPath>Assemblies\DevExpress.Xpf.Grid.v24.1.dll</HintPath>
+    <Reference Include="DevExpress.Xpf.Grid.v$(DevExpressVersion)">
+      <HintPath>$(DevExpressDirectory)\DevExpress.Xpf.Grid.v$(DevExpressVersion).dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>

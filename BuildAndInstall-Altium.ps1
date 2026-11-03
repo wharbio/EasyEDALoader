@@ -559,38 +559,55 @@ Write-Host "Altium executable: $AltiumExe"
 
 Assert-AltiumClosed
 
+$altiumSystemDirectory = Join-Path (Split-Path -Parent $AltiumExe) "System"
+$devExpressDirectory = Join-Path $altiumSystemDirectory "DotNET\DevExpress.Wpf"
+$devExpressDataAssemblies = @(Get-ChildItem -LiteralPath $devExpressDirectory -Filter "DevExpress.Data.v*.dll")
+if ($devExpressDataAssemblies.Count -ne 1) {
+    throw "Expected one DevExpress.Data assembly in '$devExpressDirectory'; found $($devExpressDataAssemblies.Count)."
+}
+$devExpressVersionMatch = [regex]::Match($devExpressDataAssemblies[0].BaseName, '^DevExpress\.Data\.v(\d+\.\d+)$')
+if (-not $devExpressVersionMatch.Success) {
+    throw "Could not determine the installed DevExpress version from '$($devExpressDataAssemblies[0].Name)'."
+}
+$altiumBuildProperties = @(
+    "-p:AltiumSystemDirectory=$altiumSystemDirectory",
+    "-p:DevExpressDirectory=$devExpressDirectory",
+    "-p:DevExpressVersion=$($devExpressVersionMatch.Groups[1].Value)"
+)
+Write-Host "Building against installed Altium SDK and DevExpress $($devExpressVersionMatch.Groups[1].Value)"
+
 Write-Step "Building EasyEDA Loader ($Configuration)"
-dotnet build $projectPath -c $Configuration --nologo
+dotnet build $projectPath -c $Configuration --nologo -v:q -clp:ErrorsOnly @altiumBuildProperties
 if ($LASTEXITCODE -ne 0) {
     throw "dotnet build failed for EasyEDA Loader with exit code $LASTEXITCODE."
 }
 
 Write-Step "Building Tronstol E1 PNP output generator ($Configuration)"
-dotnet build $tronstolProjectPath -c $Configuration --nologo
+dotnet build $tronstolProjectPath -c $Configuration --nologo -v:q -clp:ErrorsOnly @altiumBuildProperties
 if ($LASTEXITCODE -ne 0) {
     throw "dotnet build failed for Tronstol E1 PNP output generator with exit code $LASTEXITCODE."
 }
 
 Write-Step "Building EasyEDA Shape SVG output generator ($Configuration)"
-dotnet build $shapeSvgProjectPath -c $Configuration --nologo
+dotnet build $shapeSvgProjectPath -c $Configuration --nologo -v:q -clp:ErrorsOnly @altiumBuildProperties
 if ($LASTEXITCODE -ne 0) {
     throw "dotnet build failed for EasyEDA Shape SVG output generator with exit code $LASTEXITCODE."
 }
 
 Write-Step "Building Tronstol E1 Scan Gerber output generator ($Configuration)"
-dotnet build $scanGerberProjectPath -c $Configuration --nologo
+dotnet build $scanGerberProjectPath -c $Configuration --nologo -v:q -clp:ErrorsOnly @altiumBuildProperties
 if ($LASTEXITCODE -ne 0) {
     throw "dotnet build failed for Tronstol E1 Scan Gerber output generator with exit code $LASTEXITCODE."
 }
 
 Write-Step "Building OCCT HLR helper ($Configuration)"
-dotnet build $helperProjectPath -c $Configuration --nologo
+dotnet build $helperProjectPath -c $Configuration --nologo -v:q -clp:ErrorsOnly
 if ($LASTEXITCODE -ne 0) {
     throw "dotnet build failed for OCCT HLR helper with exit code $LASTEXITCODE."
 }
 
 Write-Step "Building F3D render helper ($Configuration)"
-dotnet build $f3dHelperProjectPath -c $Configuration --nologo
+dotnet build $f3dHelperProjectPath -c $Configuration --nologo -v:q -clp:ErrorsOnly
 if ($LASTEXITCODE -ne 0) {
     throw "dotnet build failed for F3D render helper with exit code $LASTEXITCODE."
 }

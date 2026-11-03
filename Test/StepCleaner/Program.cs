@@ -1651,6 +1651,29 @@ namespace StepCleaner.Tests
                 AssertNear(firstZInfo.OffsetFromOrigin, secondZInfo.OffsetFromOrigin, 0.00001, "cached Z info should preserve the parsed offset", failures);
                 AssertNear(firstZInfo.Height, secondZInfo.Height, 0.00001, "cached Z info should preserve the parsed height", failures);
                 AssertEqual("1", rawObjLoadCount.ToString(CultureInfo.InvariantCulture), "cached Z info should avoid reparsing raw OBJ on repeated imports", failures);
+
+                byte[] positiveOriginObj = Encoding.UTF8.GetBytes("v 0 0 0.20\nv 1 0 2.20\n");
+                ModelZInfo positiveZInfo = ModelZInfoCache.ParseRawObj(positiveOriginObj);
+                AssertNear(-0.20, positiveZInfo.OffsetFromOrigin, 0.00001, "positive lowest vertex needs a downward Z correction", failures);
+                AssertNear(2.0, positiveZInfo.Height, 0.00001, "signed Z correction must preserve model height", failures);
+                AssertNear(0.0, 0.20 + positiveZInfo.OffsetFromOrigin, 0.00001, "corrected model bottom must lie at the footprint plane", failures);
+
+                string legacyZInfoCachePath = Path.Combine(zInfoCacheDirectory, "legacy.zinfo");
+                File.WriteAllLines(legacyZInfoCachePath, new[] { "0.20", "2.0" });
+                int legacyRawObjLoadCount = 0;
+                ModelZInfo migratedZInfo = ModelZInfoCache.GetOrCreate(legacyZInfoCachePath, () =>
+                {
+                    legacyRawObjLoadCount++;
+                    return positiveOriginObj;
+                });
+                ModelZInfo migratedCacheHit = ModelZInfoCache.GetOrCreate(legacyZInfoCachePath, () =>
+                {
+                    legacyRawObjLoadCount++;
+                    return positiveOriginObj;
+                });
+                AssertNear(-0.20, migratedZInfo.OffsetFromOrigin, 0.00001, "legacy unsigned Z caches must be recalculated", failures);
+                AssertNear(-0.20, migratedCacheHit.OffsetFromOrigin, 0.00001, "signed Z correction must survive a cache hit", failures);
+                AssertEqual("1", legacyRawObjLoadCount.ToString(CultureInfo.InvariantCulture), "legacy Z cache migration should load the OBJ only once", failures);
             }
             finally
             {

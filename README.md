@@ -563,5 +563,12 @@ incompatible or fail to load it from the extension manager.
   </Item>
 ```
 
-## Known Issues
-The 3D model is not places *quite* right, something is still different from the reported translation and the actual. See [EeFootprint3dModel](/EasyEDA-Loader/FootprintShapes/EeFootprint3dModel.cs) for more information and how and where it retrieves model info from.
+## 3D Model Placement
+
+Model placement uses the footprint's local origin, not the board origin, and
+preserves explicit source-model offsets. The OBJ height correction subtracts
+the lowest vertex Z, including when that vertex is above zero; the previous
+absolute-value calculation could raise the model instead of lowering it.
+Existing unsigned Z cache entries are recalculated once on their next use.
+See [EeFootprint3dModel](EasyEDA-Loader/FootprintShapes/EeFootprint3dModel.cs)
+for the import and placement path.

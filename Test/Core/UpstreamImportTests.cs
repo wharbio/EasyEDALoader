@@ -96,7 +96,12 @@ internal static class UpstreamImportTests
             throw new InvalidOperationException($"Expected component-local model center (0,0), got ({bounds?.CenterX},{bounds?.CenterY}).");
 
         int movedX = 0, movedY = 0;
-        object model = PcbTestProxy.Create("PCB.IPCB_Model", (method, args) => PcbTestProxy.Default(method.ReturnType));
+        int modelZ = int.MinValue;
+        object model = PcbTestProxy.Create("PCB.IPCB_Model", (method, args) =>
+        {
+            if (method.Name == "SetState") modelZ = Convert.ToInt32(args[3]);
+            return PcbTestProxy.Default(method.ReturnType);
+        });
         object body = PcbTestProxy.Create("PCB.IPCB_ComponentBody", (method, args) =>
         {
             if (method.Name.Contains("ModelFactory_FromFilename")) return model;
@@ -109,9 +114,11 @@ internal static class UpstreamImportTests
         try
         {
             serverField.SetValue(null, server);
-            typeof(EEPCB).GetMethod("CreateComponentBody").Invoke(null, new object[] { component, "fixture.step", 0d, 0d, 0d, 0.75d, -0.25d, 0d, "fixture", 0d });
+            typeof(EEPCB).GetMethod("CreateComponentBody").Invoke(null, new object[] { component, "fixture.step", 0d, 0d, 0d, 0.75d, -0.25d, -0.20d, "fixture", 0d });
             if (Math.Abs(movedX - Coord(100.75)) > 1 || Math.Abs(movedY - Coord(49.75)) > 1)
                 throw new InvalidOperationException("Model fallback placement used board origin instead of footprint location.");
+            if (Math.Abs(modelZ - Coord(-0.20)) > 1)
+                throw new InvalidOperationException("Signed model Z correction did not reach Altium unchanged.");
         }
         finally { serverField.SetValue(null, previous); }
     }
